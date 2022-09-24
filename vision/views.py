@@ -2,11 +2,10 @@ from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from .forms import ImageForm
 from .models import Image
-from .script_1 import detect_text_my
+from .script import detect_text_my
 from Web_vision_final.settings import MEDIA_ROOT
 
 
-# Create your views here.
 def image_view(request):
     if request.method == 'POST':
         form = ImageForm(request.POST, request.FILES)

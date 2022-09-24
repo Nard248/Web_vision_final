@@ -1,36 +1,72 @@
-# from Web_vision_final.settings import MEDIA_ROOT
-# import easyocr
-# import cv2
-# import numpy as np
-# import os
-# reader = easyocr.Reader(['en'])
+def detect_text_my(word, path, name):
+    import os
+    from google.cloud import vision
+    import io
+    from PIL import Image, ImageDraw
+    from Web_vision_final.settings import MEDIA_ROOT
+
+    client = vision.ImageAnnotatorClient()
+    img = Image.open(path)
+    width, height = img.size
+    new_width = 1050
+    new_height = height * (new_width / width)
+    img.thumbnail((int(new_width), int(new_height)))
+    buffer = io.BytesIO()
+    img.save(buffer, "JPEG")
+    content = buffer.getvalue()
+    image = vision.Image(content=content)
+    response = client.text_detection(image=image)
+    texts = response.text_annotations
+    for text in texts:
+        if text.description == word or word in text.description:
+            img1 = ImageDraw.Draw(img)
+            img1.rectangle([(text.bounding_poly.vertices[0].x - 25,
+                             text.bounding_poly.vertices[0].y - 25),
+                            (text.bounding_poly.vertices[2].x + 25,
+                             text.bounding_poly.vertices[2].y + 25)], outline='red', width=5)
+    directory = MEDIA_ROOT + '/Processed'
+    img.save(directory + '/' + name + '.jpeg')
+    return f'media/Processed/{name}.jpeg'
+    # os.chdir(MEDIA_ROOT + '/Processed')
+    # name = name + '.jpeg'
+    # cv2.imwrite(f'{name}', img)
+    # return f'media/Processed/{name}'
+
+    # texts = response.text_annotations
+    #
+    # for text in texts:
+    #     vertices = (['({},{})'.format(vertex.x, vertex.y)
+    #                  for vertex in text.bounding_poly.vertices])
+    #
+    # if response.error.message:
+    #     raise Exception(
+    #         '{}\nFor more info on error messages, check: '
+    #         'https://cloud.google.com/apis/design/errors'.format(
+    #             response.error.message))
+
+# def detect_text(path):
+#     from google.cloud import vision
+#     import io
+#     client = vision.ImageAnnotatorClient()
+#     with io.open(path, 'rb') as image_file:
+#         content = image_file.read()
 #
+#     image = vision.Image(content=content)
 #
-# def search_for_text(word, path, name):
-#     img = cv2.imread(path)
-#     width = img.shape[1]
-#     height = img.shape[0]
-#     img = cv2.resize(img, dsize=(1300, int((1300/width) * height)))
-#     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-#     result = reader.readtext(img)
-#     for detection in result:
-#         text = detection[1]
-#         if word in text:
-#             top_left = tuple(detection[0][0])
-#             bottom_right = tuple(detection[0][2])
-#             font = cv2.FONT_HERSHEY_SIMPLEX
-#             img = cv2.rectangle(img, tuple([top_left[0]-30, top_left[1]-30]), tuple([bottom_right[0]+30, bottom_right[1]+30]), (0, 255, 0), 3)
-#             img = cv2.putText(img, text, tuple([top_left[0]-35, top_left[1]-35]), font, 1, (0, 255, 255), 2, cv2.LINE_AA)
-#             os.chdir(MEDIA_ROOT + '/Processed')
-#             name = name + '.jpeg'
-#             cv2.imwrite(f'{name}', img)
-#             return f'media/Processed/{name}'
-#         # else:
-#         #     img = cv2.imread(path)
-#         #     os.chdir(MEDIA_ROOT + '/Processed')
-#         #     name = name + '.jpeg'
-#         #     cv2.imwrite(f'{name}', img)
-#         #     return f'media/Processed/{name}'
+#     response = client.text_detection(image=image)
+#     texts = response.text_annotations
+#     print('Texts:')
 #
+#     for text in texts:
+#         print('\n"{}"'.format(text))
 #
-# # print(search_for_text('WAITING', f'{MEDIA_ROOT}/Uploads/sign_small.jpg', 'testettst'))
+#         vertices = (['({},{})'.format(vertex.x, vertex.y)
+#                      for vertex in text.bounding_poly.vertices])
+#
+#         print('bounds: {}'.format(','.join(vertices)))
+#
+#     if response.error.message:
+#         raise Exception(
+#             '{}\nFor more info on error messages, check: '
+#             'https://cloud.google.com/apis/design/errors'.format(
+#                 response.error.message))
